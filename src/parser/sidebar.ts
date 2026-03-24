@@ -18,7 +18,8 @@ export function parseSidebar(content: string, basePath: string = ''): Chapter[] 
     const level = Math.floor(indent / 2);
 
     // 匹配列表项：* [title](path) 或 - [title](path)
-    const linkMatch = trimmed.match(/^[\s]*[*\-+]\s+\[([^\]]+)\]\(([^)]+)\)/);
+    // 使用 (.+) 来匹配路径，以支持路径中包含括号的情况，直到行尾的 )
+    const linkMatch = trimmed.match(/^[\s]*[*\-+]\s+\[(.*?)\]\((.+)\)$/);
     // 匹配纯文本列表项：* title
     const textMatch = trimmed.match(/^[\s]*[*\-+]\s+(.+)/);
 
