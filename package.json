@@ -1,0 +1,51 @@
+{
+  "name": "docsify-to-epub",
+  "version": "1.0.0",
+  "description": "将 Docsify 文档站点转换为 EPUB 电子书",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "dte": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "docsify",
+    "epub",
+    "converter",
+    "ebook",
+    "documentation",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "archiver": "^7.0.0",
+    "cheerio": "^1.0.0",
+    "commander": "^12.0.0",
+    "highlight.js": "^11.9.0",
+    "markdown-it": "^14.0.0",
+    "uuid": "^9.0.0",
+    "glob": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.0",
+    "@types/markdown-it": "^14.0.0",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^9.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  },
+  "license": "MIT"
+}
