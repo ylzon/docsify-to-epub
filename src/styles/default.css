@@ -1,6 +1,6 @@
 /* docsify-to-epub 默认样式 */
 body {
-  font-family: Georgia, 'Times New Roman', serif;
+  /* font-family: Georgia, 'Times New Roman', serif; */
   line-height: 1.6;
   margin: 1em;
   font-size: 1em;
@@ -112,18 +112,15 @@ pre {
   border-radius: 6px;
   padding: 16px;
   overflow-x: auto;
-  font-size: 0.875em;
-  line-height: 1.45;
 }
 pre code {
   padding: 0;
 }
 code {
   border-radius: 3px;
-  padding: 0.2em 0.4em;
-  font-size: 85%;
+  padding: 0.1em 0.2em;
   color: #42b983;
 }
 strong {
-  color: #2c3e50;
+  color: #e06c75;
 }
