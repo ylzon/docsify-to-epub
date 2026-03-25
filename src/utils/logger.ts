@@ -29,6 +29,18 @@ export function error(msg: string): void {
   console.error(colors.red('✖'), msg);
 }
 
+export function progress(msg: string): void {
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  process.stdout.write(`${colors.blue('ℹ')} ${msg}`);
+}
+
+export function progressEnd(msg: string): void {
+  process.stdout.clearLine(0);
+  process.stdout.cursorTo(0);
+  console.log(colors.blue('ℹ'), msg);
+}
+
 export function debug(msg: string): void {
   if (verbose) {
     console.log(colors.gray('  →'), colors.gray(msg));

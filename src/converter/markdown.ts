@@ -96,8 +96,7 @@ export function convertMarkdown(
   html = html.replace(
     /src="([^"]+)"/g,
     (match, src) => {
-      // 跳过远程图片和 data URI
-      if (src.startsWith('http') || src.startsWith('data:')) {
+      if (src.startsWith('data:')) {
         return match;
       }
       const epubPath = imageMap.get(src);

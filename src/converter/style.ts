@@ -4,7 +4,7 @@ import * as https from 'https';
 import * as http from 'http';
 import { readFile, exists } from '../utils/fs.js';
 import { extractCssLinks } from '../parser/config.js';
-import { debug, warn, info } from '../utils/logger.js';
+import { debug, warn, info, error } from '../utils/logger.js';
 
 /**
  * 下载远程 CSS 文件
@@ -55,11 +55,23 @@ export async function extractAndMergeStyles(docsDir: string, downloadTheme: bool
           // 下载远程 CSS（如 Docsify 主题）
           try {
             info(`📥 下载远程 CSS: ${link}`);
-            const css = await downloadCss(link);
-            styles.push(`/* Remote: ${link} */\n${css}`);
-            debug(`下载成功: ${link} (${(css.length / 1024).toFixed(1)} KB)`);
+            let css: string | null = null;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                css = await downloadCss(link);
+                break;
+              } catch (err) {
+                warn(`下载远程 CSS 失败: ${link} - ${err} [第 ${attempt}/3 次]`);
+              }
+            }
+            if (css) {
+              styles.push(`/* Remote: ${link} */\n${css}`);
+              debug(`下载成功: ${link} (${(css.length / 1024).toFixed(1)} KB)`);
+            } else {
+              error(`远程 CSS 下载最终失败: ${link} (来源: ${indexPath})`);
+            }
           } catch (err) {
-            warn(`下载远程 CSS 失败: ${link} - ${err}`);
+            error(`远程 CSS 下载最终失败: ${link} (来源: ${indexPath}) - ${err}`);
           }
         } else {
           // 本地 CSS

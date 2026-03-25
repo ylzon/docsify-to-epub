@@ -7,7 +7,7 @@ import type { CliOptions, BookMetadata, Chapter, ChapterContent } from './types.
 import { parseSidebar, flattenChapters, buildTocTree, extractConfig, scanForChapters } from './parser/index.js';
 import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, addHeadingIds, extractHeadings } from './converter/index.js';
 import { generateOpf, generateNcx, generateNav, createEpub } from './generator/index.js';
-import { readFile, exists, setVerbose, info, success, error, warn, debug } from './utils/index.js';
+import { readFile, exists, setVerbose, info, success, error, warn, debug, progress, progressEnd } from './utils/index.js';
 
 const program = new Command();
 
@@ -94,7 +94,12 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
   // 6. 收集和加载图片
   info('🖼️  处理图片资源...');
   const imageRefs = collectImageRefs(chaptersWithContent);
-  const { images, imageMap } = await loadImages(imageRefs, docsDir);
+  const { images, imageMap } = await loadImages(imageRefs, docsDir, (current, total) => {
+    progress(`🖼️  处理图片资源... (${current}/${total})`);
+  });
+  if (imageRefs.length > 0) {
+    progressEnd(`🖼️  处理图片资源... (${images.length}/${imageRefs.length})`);
+  }
   debug(`加载了 ${images.length} 张图片`);
 
   // 7. 构建章节映射（用于内部链接转换）
@@ -123,10 +128,18 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
     }
     // 3. 同时保留原始引用路径
     for (const ref of imageRefs) {
-      const normalized = path.normalize(path.join(ref.chapterDir || '.', ref.src));
-      const epubPath = imageMap.get(normalized);
-      if (epubPath) {
-        chapterImageMap.set(ref.src, epubPath);
+      if (ref.remote) {
+        // 远程图片：直接用 URL 作为 key
+        const epubPath = imageMap.get(ref.src);
+        if (epubPath) {
+          chapterImageMap.set(ref.src, epubPath);
+        }
+      } else {
+        const normalized = path.normalize(path.join(ref.chapterDir || '.', ref.src));
+        const epubPath = imageMap.get(normalized);
+        if (epubPath) {
+          chapterImageMap.set(ref.src, epubPath);
+        }
       }
     }
 
