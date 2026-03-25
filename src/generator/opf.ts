@@ -57,7 +57,6 @@ export function generateOpf(
     <dc:identifier id="book-id">urn:uuid:${metadata.identifier}</dc:identifier>
     <dc:title>${escapeXml(metadata.title)}</dc:title>
     <dc:creator>${escapeXml(metadata.author)}</dc:creator>
-    <dc:language>${metadata.language}</dc:language>
     <dc:date>${metadata.date}</dc:date>
     <meta property="dcterms:modified">${metadata.date}</meta>${coverMeta}
     ${metadata.publisher ? `<dc:publisher>${escapeXml(metadata.publisher)}</dc:publisher>` : ''}

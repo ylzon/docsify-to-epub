@@ -20,7 +20,6 @@ program
   .option('-t, --title <title>', '书籍标题')
   .option('-a, --author <author>', '作者名称', 'Unknown')
   .option('-c, --cover <image>', '封面图片路径')
-  .option('--lang <language>', '语言代码', 'zh-CN')
   .option('--css <file>', '自定义 CSS 文件路径')
   .option('--theme', '下载远程 Docsify 主题样式', false)
   .option('-v, --verbose', '显示详细日志', false)
@@ -169,7 +168,6 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
   const metadata: BookMetadata = {
     title: bookTitle,
     author: options.author || 'Unknown',
-    language: options.lang || 'zh-CN',
     identifier: uuidv4(),
     date: new Date().toISOString().split('T')[0],
     cover: options.cover,
