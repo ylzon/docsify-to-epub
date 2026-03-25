@@ -1,4 +1,5 @@
 import * as path from 'path';
+import sharp from 'sharp';
 import type { Chapter, ImageAsset } from '../types.js';
 import { readFileBuffer, exists, getMediaType } from '../utils/fs.js';
 import { debug, warn, error } from '../utils/logger.js';
@@ -133,6 +134,43 @@ async function downloadImage(url: string, maxRetries: number = 3): Promise<{ dat
 }
 
 /**
+ * 优化图片（大于 150KB 时压缩，SVG 转 PNG）
+ */
+async function optimizeImage(data: Buffer, ext: string, mediaType: string): Promise<{ data: Buffer; ext: string; mediaType: string }> {
+  let newExt = ext;
+  let newMediaType = mediaType;
+
+  try {
+    let s = sharp(data);
+    let metadata = await s.metadata();
+
+    const isSvg = metadata.format === 'svg' || ext === '.svg' || mediaType === 'image/svg+xml';
+    let currentBuffer = await s.toBuffer();
+
+    if (isSvg) {
+      s = sharp(await s.png().toBuffer());
+      newExt = '.png';
+      newMediaType = 'image/png';
+      metadata = await s.metadata();
+    } else {
+      if (currentBuffer.length > 150 * 1024) {
+        if (metadata.format === 'jpeg' || newExt === '.jpg' || newExt === '.jpeg') {
+          currentBuffer = await s.jpeg({ quality: 75 }).toBuffer();
+        } else if (metadata.format === 'png' || newExt === '.png') {
+          currentBuffer = await s.png({ quality: 75, compressionLevel: 9 }).toBuffer();
+        } else if (metadata.format === 'webp' || newExt === '.webp') {
+          currentBuffer = await s.webp({ quality: 75 }).toBuffer();
+        }
+      }
+    }
+
+    return { data: currentBuffer, ext: newExt, mediaType: newMediaType };
+  } catch (err) {
+    return { data, ext, mediaType };
+  }
+}
+
+/**
  * 加载并处理图片资源
  * imageMap 的 key 是 "chapterDir + \0 + src" 的组合（用于精确匹配）
  */
@@ -157,9 +195,12 @@ export async function loadImages(
         continue;
       }
 
-      const { data, ext } = result;
+      const { data: rawData, ext: rawExt } = result;
+      const rawMediaType = getMediaType(`dummy${rawExt || '.png'}`);
+
+      const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
+
       const filename = `image-${String(++index).padStart(3, '0')}${ext}`;
-      const mediaType = getMediaType(filename);
 
       const asset: ImageAsset = {
         id: `img-${String(index).padStart(3, '0')}`,
@@ -185,10 +226,13 @@ export async function loadImages(
     }
 
     try {
-      const data = await readFileBuffer(absolutePath);
-      const ext = path.extname(ref.src).toLowerCase();
+      const rawData = await readFileBuffer(absolutePath);
+      const rawExt = path.extname(ref.src).toLowerCase();
+      const rawMediaType = getMediaType(ref.src);
+
+      const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
+
       const filename = `image-${String(++index).padStart(3, '0')}${ext}`;
-      const mediaType = getMediaType(ref.src);
 
       // 规范化后的相对路径（相对于 docsDir）
       const normalizedKey = path.normalize(path.join(ref.chapterDir, ref.src));

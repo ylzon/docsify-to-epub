@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it';
+import * as cheerio from 'cheerio';
 import { highlightCode } from './highlight.js';
 import type { SubHeading } from '../types.js';
 
@@ -53,14 +54,12 @@ function preprocessDocsify(content: string): string {
 }
 
 /**
- * 确保 HTML 输出是合法的 XHTML（闭合所有 void 元素）
+ * 确保 HTML 输出是合法的 XHTML（修复缺少引号的属性及闭合所有的 void 元素）
  */
 function sanitizeXhtml(html: string): string {
-  // 闭合所有未自闭合的 void 元素: <img ...>, <br>, <hr>, <input ...> 等
-  return html.replace(
-    /<(img|br|hr|input|meta|link|col|area|base|embed|source|track|wbr)(\s[^>]*)?\s*(?<!\/)>/gi,
-    '<$1$2 />'
-  );
+  // 使用 cheerio 加载 HTML 片段并生成严格的 XML（XHTML）
+  const $ = cheerio.load(html, null, false);
+  return $.xml();
 }
 
 /**
@@ -155,7 +154,7 @@ function escapeXml(str: string): string {
 export function extractHeadings(markdownContent: string): SubHeading[] {
   const headings: SubHeading[] = [];
   // 匹配 ## 和 ### 标题
-  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
+  const headingRegex = /^(#{2})\s+(.+)$/gm;
   let match;
 
   while ((match = headingRegex.exec(markdownContent)) !== null) {
