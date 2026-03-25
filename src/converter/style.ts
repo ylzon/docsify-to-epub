@@ -42,15 +42,15 @@ function downloadCss(url: string): Promise<string> {
 export async function extractAndMergeStyles(docsDir: string, downloadTheme: boolean = false): Promise<string> {
   const styles: string[] = [];
 
-  // 1. 尝试从 index.html 提取 CSS 链接
-  const indexPath = path.join(docsDir, 'index.html');
-  if (exists(indexPath)) {
-    const html = await readFile(indexPath);
-    const cssLinks = extractCssLinks(html);
+  // 1. 当启用 --theme 时，从 index.html 提取 CSS
+  if (downloadTheme) {
+    const indexPath = path.join(docsDir, 'index.html');
+    if (exists(indexPath)) {
+      const html = await readFile(indexPath);
+      const cssLinks = extractCssLinks(html);
 
-    for (const link of cssLinks) {
-      if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('//')) {
-        if (downloadTheme) {
+      for (const link of cssLinks) {
+        if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('//')) {
           // 下载远程 CSS（如 Docsify 主题）
           try {
             info(`📥 下载远程 CSS: ${link}`);
@@ -61,24 +61,22 @@ export async function extractAndMergeStyles(docsDir: string, downloadTheme: bool
             warn(`下载远程 CSS 失败: ${link} - ${err}`);
           }
         } else {
-          debug(`跳过远程 CSS (使用 --theme 开启下载): ${link}`);
-        }
-      } else {
-        // 本地 CSS
-        const cssPath = path.join(docsDir, link);
-        if (exists(cssPath)) {
-          const css = await readFile(cssPath);
-          styles.push(`/* Source: ${link} */\n${css}`);
-          debug(`提取本地 CSS: ${link}`);
+          // 本地 CSS
+          const cssPath = path.join(docsDir, link);
+          if (exists(cssPath)) {
+            const css = await readFile(cssPath);
+            styles.push(`/* Source: ${link} */\n${css}`);
+            debug(`提取本地 CSS: ${link}`);
+          }
         }
       }
-    }
 
-    // 提取内联 <style> 标签
-    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-    let match;
-    while ((match = styleRegex.exec(html)) !== null) {
-      styles.push(`/* Inline style from index.html */\n${match[1]}`);
+      // 提取内联 <style> 标签
+      const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      let match;
+      while ((match = styleRegex.exec(html)) !== null) {
+        styles.push(`/* Inline style from index.html */\n${match[1]}`);
+      }
     }
   }
 

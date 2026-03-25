@@ -52,8 +52,8 @@ code {
   font-size: 85%;
 }
 .hljs {
-  color: #24292e;
-  // background: #ffffff;
+  color: #c9d1d9;
+  // background: #0d1117;
 }
 
 .hljs-doctag,
@@ -64,7 +64,7 @@ code {
 .hljs-type,
 .hljs-variable.language_ {
   /* prettylights-syntax-keyword */
-  color: #d73a49;
+  color: #ff7b72;
 }
 
 .hljs-title,
@@ -72,7 +72,7 @@ code {
 .hljs-title.class_.inherited__,
 .hljs-title.function_ {
   /* prettylights-syntax-entity */
-  color: #6f42c1;
+  color: #d2a8ff;
 }
 
 .hljs-attr,
@@ -86,27 +86,27 @@ code {
 .hljs-selector-class,
 .hljs-selector-id {
   /* prettylights-syntax-constant */
-  color: #005cc5;
+  color: #79c0ff;
 }
 
 .hljs-regexp,
 .hljs-string,
 .hljs-meta .hljs-string {
   /* prettylights-syntax-string */
-  color: #032f62;
+  color: #a5d6ff;
 }
 
 .hljs-built_in,
 .hljs-symbol {
   /* prettylights-syntax-variable */
-  color: #e36209;
+  color: #ffa657;
 }
 
 .hljs-comment,
 .hljs-code,
 .hljs-formula {
   /* prettylights-syntax-comment */
-  color: #6a737d;
+  color: #8b949e;
 }
 
 .hljs-name,
@@ -114,47 +114,47 @@ code {
 .hljs-selector-tag,
 .hljs-selector-pseudo {
   /* prettylights-syntax-entity-tag */
-  color: #22863a;
+  color: #7ee787;
 }
 
 .hljs-subst {
   /* prettylights-syntax-storage-modifier-import */
-  color: #24292e;
+  color: #c9d1d9;
 }
 
 .hljs-section {
   /* prettylights-syntax-markup-heading */
-  color: #005cc5;
+  color: #1f6feb;
   font-weight: bold;
 }
 
 .hljs-bullet {
   /* prettylights-syntax-markup-list */
-  color: #735c0f;
+  color: #f2cc60;
 }
 
 .hljs-emphasis {
   /* prettylights-syntax-markup-italic */
-  color: #24292e;
+  color: #c9d1d9;
   font-style: italic;
 }
 
 .hljs-strong {
   /* prettylights-syntax-markup-bold */
-  color: #24292e;
+  color: #c9d1d9;
   font-weight: bold;
 }
 
 .hljs-addition {
   /* prettylights-syntax-markup-inserted */
-  color: #22863a;
-  background-color: #f0fff4;
+  color: #aff5b4;
+  background-color: #033a16;
 }
 
 .hljs-deletion {
   /* prettylights-syntax-markup-deleted */
-  color: #b31d28;
-  background-color: #ffeef0;
+  color: #ffdcd7;
+  background-color: #67060c;
 }
 
 .hljs-char.escape_,
