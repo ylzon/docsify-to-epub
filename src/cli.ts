@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
+import { version } from '../package.json';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import type { CliOptions, BookMetadata, Chapter, ChapterContent } from './types.js';
@@ -14,7 +15,7 @@ const program = new Command();
 program
   .name('dtoe')
   .description('将 Docsify 文档转换为 EPUB 电子书')
-  .version(process.env.npm_package_version || '1.0.0')
+  .version(version)
   .argument('<dir>', 'Docsify 文档目录路径')
   .option('-o, --output <file>', '输出文件路径 (默认: <书名>.epub)')
   .option('-t, --title <title>', '书籍标题')
