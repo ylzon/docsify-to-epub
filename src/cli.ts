@@ -5,7 +5,7 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import type { CliOptions, BookMetadata, Chapter, ChapterContent } from './types.js';
 import { parseSidebar, flattenChapters, buildTocTree, extractConfig, scanForChapters } from './parser/index.js';
-import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, addHeadingIds } from './converter/index.js';
+import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, addHeadingIds, extractHeadings } from './converter/index.js';
 import { generateOpf, generateNcx, generateNav, createEpub } from './generator/index.js';
 import { readFile, exists, setVerbose, info, success, error, warn, debug } from './utils/index.js';
 
@@ -136,12 +136,15 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
 
     const xhtml = wrapXhtml(ch.title, bodyHtml);
 
+    const subHeadings = extractHeadings(ch.content || '');
+
     chapterContents.push({
       id: ch.id,
       title: ch.title,
       filename: `${ch.id}.xhtml`,
       xhtml,
       level: ch.level,
+      subHeadings,
     });
     debug(`转换: ${ch.title}`);
   }
@@ -180,7 +183,7 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
   for (const cc of chapterContents) {
     filenameMap.set(cc.id, cc.filename);
   }
-  const tocTree = buildTocTree(chapters, filenameMap);
+  const tocTree = buildTocTree(chapters, filenameMap, chapterContents);
 
   const opf = generateOpf(metadata, chapterContents, images);
   const ncx = generateNcx(metadata.identifier, metadata.title, tocTree);

@@ -1,4 +1,4 @@
-import type { Chapter, TocEntry } from '../types.js';
+import type { Chapter, ChapterContent, TocEntry } from '../types.js';
 
 /**
  * 去除字符串中的 HTML 标签，仅保留文本内容
@@ -111,11 +111,23 @@ export function flattenChapters(chapters: Chapter[]): Chapter[] {
  * 从章节树构建层级目录结构
  * @param chapters 解析 sidebar 得到的层级章节树
  * @param filenameMap 章节 ID → 文件名 的映射（如 "chapter-001" → "chapter-001.xhtml"）
+ * @param chapterContents 章节内容列表（含 subHeadings），用于生成子标题目录条目
  */
 export function buildTocTree(
   chapters: Chapter[],
-  filenameMap: Map<string, string>
+  filenameMap: Map<string, string>,
+  chapterContents?: ChapterContent[]
 ): TocEntry[] {
+  // 建立 id → subHeadings 映射
+  const subHeadingsMap = new Map<string, ChapterContent['subHeadings']>();
+  if (chapterContents) {
+    for (const cc of chapterContents) {
+      if (cc.subHeadings && cc.subHeadings.length > 0) {
+        subHeadingsMap.set(cc.id, cc.subHeadings);
+      }
+    }
+  }
+
   function findFirstFilename(entries: TocEntry[]): string {
     for (const entry of entries) {
       if (entry.filename) return entry.filename;
@@ -125,6 +137,33 @@ export function buildTocTree(
     return '';
   }
 
+  /**
+   * 将 subHeadings 构建为嵌套的 TocEntry 列表
+   * h2 作为顶层，h3 嵌套在前一个 h2 下
+   */
+  function buildSubHeadingEntries(filename: string, subHeadings: NonNullable<ChapterContent['subHeadings']>): TocEntry[] {
+    const entries: TocEntry[] = [];
+
+    for (const sh of subHeadings) {
+      const entry: TocEntry = {
+        title: sh.title,
+        filename: `${filename}#${sh.anchor}`,
+        children: [],
+      };
+      if (sh.level === 2) {
+        entries.push(entry);
+      } else if (sh.level === 3 && entries.length > 0) {
+        // h3 嵌套在最近的 h2 下
+        entries[entries.length - 1].children.push(entry);
+      } else {
+        // h3 但前面没有 h2，直接作为顶层
+        entries.push(entry);
+      }
+    }
+
+    return entries;
+  }
+
   function convert(ch: Chapter): TocEntry {
     const children = ch.children.map(convert);
 
@@ -132,6 +171,14 @@ export function buildTocTree(
     let filename = filenameMap.get(ch.id) || '';
     if (!filename) {
       filename = findFirstFilename(children);
+    }
+
+    // 如果是叶子章节（无 sidebar 子节点），将 subHeadings 追加为子目录
+    if (children.length === 0 && filename) {
+      const subHeadings = subHeadingsMap.get(ch.id);
+      if (subHeadings) {
+        children.push(...buildSubHeadingEntries(filename, subHeadings));
+      }
     }
 
     return { title: ch.title, filename, children };
