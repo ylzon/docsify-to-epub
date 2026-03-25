@@ -57,8 +57,9 @@ function preprocessDocsify(content: string): string {
  * 确保 HTML 输出是合法的 XHTML（修复缺少引号的属性及闭合所有的 void 元素）
  */
 function sanitizeXhtml(html: string): string {
-  // 使用 cheerio 加载 HTML 片段并生成严格的 XML（XHTML）
-  const $ = cheerio.load(html, null, false);
+  // 使用 cheerio 加载 HTML 片段并生成严格的 XML（XHTML），不转义中文字符
+  // @ts-ignore
+  const $ = cheerio.load(html, { xmlMode: true, decodeEntities: false }, false);
   return $.xml();
 }
 
@@ -153,12 +154,19 @@ function escapeXml(str: string): string {
  */
 export function extractHeadings(markdownContent: string): SubHeading[] {
   const headings: SubHeading[] = [];
-  // 匹配 ## 和 ### 标题
+  
+  // 先过滤掉 Markdown 代码块和 HTML pre 标签，避免提取代码内部的 ##
+  const safeContent = markdownContent
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/~~~[\s\S]*?~~~/g, '')
+    .replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, '');
+
+  // 仅匹配 ## 标题 (h2)
   const headingRegex = /^(#{2})\s+(.+)$/gm;
   let match;
 
-  while ((match = headingRegex.exec(markdownContent)) !== null) {
-    const level = match[1].length; // 2 or 3
+  while ((match = headingRegex.exec(safeContent)) !== null) {
+    const level = match[1].length; // 2
     const title = match[2].trim()
       .replace(/<!--.*?-->/g, '')  // 移除 HTML 注释
       .replace(/\{.*?\}/g, '')      // 移除 docsify 标注
@@ -181,14 +189,11 @@ export function extractHeadings(markdownContent: string): SubHeading[] {
 }
 
 /**
- * 在 XHTML 中为 h2/h3 标签注入 id 属性（用于锚点跳转）
+ * 在 XHTML 中为 h2 标签注入 id 属性（用于锚点跳转）
  */
 export function addHeadingIds(xhtml: string): string {
-  let h2Count = 0;
-  let h3Count = 0;
-
   return xhtml.replace(
-    /<(h[23])(\s[^>]*)?>([^<]+)<\/h[23]>/gi,
+    /<(h2)(\s[^>]*)?>([^<]+)<\/h2>/gi,
     (match, tag, attrs, text) => {
       const title = text.trim();
       const anchor = title

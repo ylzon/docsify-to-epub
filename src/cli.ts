@@ -7,7 +7,7 @@ import type { CliOptions, BookMetadata, Chapter, ChapterContent } from './types.
 import { parseSidebar, flattenChapters, buildTocTree, extractConfig, scanForChapters } from './parser/index.js';
 import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, addHeadingIds, extractHeadings } from './converter/index.js';
 import { generateOpf, generateNcx, generateNav, createEpub } from './generator/index.js';
-import { readFile, exists, setVerbose, info, success, error, warn, debug, progress, progressEnd } from './utils/index.js';
+import { readFile, exists, readFileBuffer, getMediaType, setVerbose, info, success, error, warn, debug, progress, progressEnd } from './utils/index.js';
 
 const program = new Command();
 
@@ -176,6 +176,34 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
   }
 
   const highlightCss = getHighlightCss();
+
+  // 9.5 处理封面图片
+  if (options.cover) {
+    const coverPath = path.resolve(options.cover);
+    if (exists(coverPath)) {
+      info('🖼️  加载封面图片...');
+      try {
+        const data = await readFileBuffer(coverPath);
+        const ext = path.extname(coverPath).toLowerCase() || '.jpg';
+        const mediaType = getMediaType(coverPath);
+        
+        images.push({
+          id: 'cover-image',
+          originalPath: coverPath,
+          epubPath: `images/cover${ext}`,
+          filename: `cover${ext}`,
+          mediaType,
+          data,
+        });
+      } catch (err) {
+        warn(`无法读取封面图片: ${options.cover}`);
+        options.cover = undefined;
+      }
+    } else {
+      warn(`封面图片不存在: ${options.cover}`);
+      options.cover = undefined;
+    }
+  }
 
   // 10. 生成 EPUB 元数据
   const metadata: BookMetadata = {
