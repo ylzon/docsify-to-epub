@@ -2,12 +2,12 @@
 
 # docsify-to-epub
 
-`docsify-to-epub` is a powerful command-line tool designed to convert your [Docsify](https://docsify.js.org/) documentation sites into structured EPUB ebooks with a single command.
+`docsify-to-epub` is a CLI tool for converting [Docsify](https://docsify.js.org/) documentation sites into EPUB ebooks.
 
 ## ✨ Features
 
-- 📑 **Smart TOC Parsing**: Parses `_sidebar.md` to generate a hierarchical EPUB Table of Contents (TOC). If the sidebar file is missing, it automatically scans the directory structure.
-- 🔗 **Headings & Navigation**: Automatically extracts nested Markdown sub-headings (h2, h3) for the TOC and resolves internal cross-chapter links.
+- 📑 **Smart TOC Parsing**: Parses to generate a hierarchical EPUB Table of Contents (TOC). If the sidebar file is missing, it automatically scans the directory structure.
+- 🔗 **Headings & Navigation**: Automatically extracts nested Markdown sub-headings for the TOC and resolves internal cross-chapter links.
 - 🖼️ **Asset Management**: Automatically resolves, loads, and bundles both local and remote images. Supports resolving reference-style image links.
 - 🎨 **Styles & Themes**: Easily inject custom CSS files. Use the `--theme` flag to fetch and bundle remote Docsify theme styles.
 - 💻 **Syntax Highlighting**: Built-in code syntax highlighting ensures your code blocks look great in e-readers.
@@ -32,7 +32,11 @@ npx docsify-to-epub <dir>
 Basic usage (assuming your documentation is inside the `docs` directory):
 
 ```bash
-dte docs/
+dtoe docs/
+```
+
+```bash
+dtoe docs/ -t "My Tech Docs" -a "John Doe" -c cover.jpg  --theme -v
 ```
 
 This will generate an `.epub` file in the current directory, typically named after your documentation site.
@@ -40,7 +44,7 @@ This will generate an `.epub` file in the current directory, typically named aft
 ### CLI Options
 
 ```bash
-dte <dir> [options]
+dtoe <dir> [options]
 
 Arguments:
   <dir>                      Path to the Docsify documentation directory
@@ -61,19 +65,19 @@ Options:
 **1. Specify output path, title, and author**
 
 ```bash
-dte docs/ -o output/my-book.epub -t "My Tech Docs" -a "John Doe"
+dtoe docs/ -o output/my-book.epub -t "My Tech Docs" -a "John Doe"
 ```
 
 **2. Add a cover image and use the remote theme style**
 
 ```bash
-dte docs/ -c cover.jpg --theme
+dtoe docs/ -c cover.jpg --theme
 ```
 
 **3. Enable verbose logging**
 
 ```bash
-dte docs/ -v
+dtoe docs/ -v
 ```
 
 ## 📄 License

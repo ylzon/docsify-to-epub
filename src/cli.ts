@@ -12,7 +12,7 @@ import { readFile, exists, readFileBuffer, getMediaType, setVerbose, info, succe
 const program = new Command();
 
 program
-  .name('dte')
+  .name('dtoe')
   .description('将 Docsify 文档转换为 EPUB 电子书')
   .version('1.0.0')
   .argument('<dir>', 'Docsify 文档目录路径')
