@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs';
 import * as https from 'https';
 import * as http from 'http';
 import { readFile, exists } from '../utils/fs.js';
@@ -134,118 +135,19 @@ export function sanitizeForEpub(css: string): string {
  * 获取默认的 EPUB 基础样式
  */
 function getDefaultEpubStyles(): string {
-  return `
-/* docsify-to-epub 默认样式 */
-body {
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.6;
-  // color: #333;
-  margin: 1em;
-  font-size: 1em;
+  const cssPath = path.join(__dirname, '..', 'src', 'styles', 'default.css');
+  // 优先从源码目录读取，回退到打包目录
+  const altPath = path.join(__dirname, 'styles', 'default.css');
+  
+  if (fs.existsSync(cssPath)) {
+    return fs.readFileSync(cssPath, 'utf-8');
+  }
+  if (fs.existsSync(altPath)) {
+    return fs.readFileSync(altPath, 'utf-8');
+  }
+  
+  // 最终回退：返回最小默认样式
+  return `body { font-family: Georgia, serif; line-height: 1.6; margin: 1em; }
+img { max-width: 100%; height: auto; }`;
 }
 
-h1 {
-  font-size: 1.8em;
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.3em;
-  // color: #1a1a1a;
-}
-
-h2 {
-  font-size: 1.5em;
-  margin-top: 0.8em;
-  margin-bottom: 0.4em;
-  // color: #2c3e50;
-}
-
-h3 {
-  font-size: 1.3em;
-  margin-top: 0.6em;
-  margin-bottom: 0.3em;
-  // color: #34495e;
-}
-
-h4, h5, h6 {
-  font-size: 1.1em;
-  margin-top: 0.5em;
-  margin-bottom: 0.2em;
-}
-
-p {
-  margin: 0.5em 0;
-  text-align: justify;
-}
-
-a {
-  color: #3498db;
-  text-decoration: none;
-}
-
-blockquote {
-  border-left: 4px solid #42b983;
-  padding: 0.5em 1em;
-  margin: 1em 0;
-  background: #f8f8f8;
-  color: #666;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 1em 0;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  text-align: left;
-}
-
-th {
-  background: #f5f5f5;
-  font-weight: bold;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-ul, ol {
-  padding-left: 2em;
-}
-
-li {
-  margin: 0.3em 0;
-}
-
-hr {
-  border: none;
-  border-top: 1px solid #eee;
-  margin: 2em 0;
-}
-
-/* Docsify 提示框样式 */
-.tip {
-  background: #f0f7fb;
-  border-left: 4px solid #3498db;
-  padding: 0.75em 1em;
-  margin: 1em 0;
-  border-radius: 0 4px 4px 0;
-}
-
-.tip p { margin: 0; }
-
-.warn {
-  background: #fdf6ec;
-  border-left: 4px solid #f0ad4e;
-  padding: 0.75em 1em;
-  margin: 1em 0;
-  border-radius: 0 4px 4px 0;
-}
-
-.warn p { margin: 0; }
-`.trim();
-}
