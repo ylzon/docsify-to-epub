@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name('dtoe')
   .description('将 Docsify 文档转换为 EPUB 电子书')
-  .version('1.0.0')
+  .version(process.env.npm_package_version || '1.0.0')
   .argument('<dir>', 'Docsify 文档目录路径')
   .option('-o, --output <file>', '输出文件路径 (默认: <书名>.epub)')
   .option('-t, --title <title>', '书籍标题')
@@ -186,7 +186,7 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
         const data = await readFileBuffer(coverPath);
         const ext = path.extname(coverPath).toLowerCase() || '.jpg';
         const mediaType = getMediaType(coverPath);
-        
+
         images.push({
           id: 'cover-image',
           originalPath: coverPath,

@@ -18,7 +18,10 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "release": "npm run build && npm run release:npm && npm run release:gh",
+    "release:npm": "npm publish",
+    "release:gh": "npm pkg set name=@ylzon/docsify-to-epub && npm publish --registry=https://npm.pkg.github.com && git checkout package.json"
   },
   "keywords": [
     "docsify",
