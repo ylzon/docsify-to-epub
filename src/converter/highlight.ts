@@ -29,7 +29,7 @@ function escapeHtml(str: string): string {
 }
 
 /**
- * 获取 highlight.js 的内置 CSS 主题（github-dark 风格）
+ * 获取 highlight.js 的内置 CSS 主题
  */
 export function getHighlightCss(): string {
   const cssPath = path.join(__dirname, '..', 'src', 'styles', 'highlight.css');

@@ -81,8 +81,10 @@ export async function extractAndMergeStyles(docsDir: string, downloadTheme: bool
     }
   }
 
-  // 2. 添加默认的 EPUB 基础样式
-  styles.unshift(getDefaultEpubStyles());
+  // 2. 未指定 --theme 时，添加默认的 EPUB 基础样式
+  if (!downloadTheme) {
+    styles.unshift(getDefaultEpubStyles());
+  }
 
   // 3. 合并并清理
   const merged = styles.join('\n\n');
