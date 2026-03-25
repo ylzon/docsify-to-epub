@@ -56,6 +56,10 @@ export async function extractConfig(docsDir: string): Promise<DocsifyConfig> {
   const subMaxMatch = configStr.match(/subMaxLevel\s*:\s*(\d+)/);
   if (subMaxMatch) config.subMaxLevel = parseInt(subMaxMatch[1], 10);
 
+  // 提取 <title> 作为备用标题
+  const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+  if (titleMatch) config.htmlTitle = titleMatch[1].trim();
+
   debug(`提取到 Docsify 配置: ${JSON.stringify(config)}`);
   return config;
 }

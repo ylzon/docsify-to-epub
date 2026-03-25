@@ -75,6 +75,7 @@ export interface BookMetadata {
 /** Docsify 配置 */
 export interface DocsifyConfig {
   name?: string;
+  htmlTitle?: string;
   basePath?: string;
   coverpage?: boolean | string;
   loadSidebar?: boolean | string;

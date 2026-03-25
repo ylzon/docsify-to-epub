@@ -53,7 +53,7 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
 
   // 2. 提取 Docsify 配置
   const config = await extractConfig(docsDir);
-  const bookTitle = options.title || config.name || path.basename(docsDir);
+  const bookTitle = options.title || config.name || config.htmlTitle || path.basename(docsDir);
   info(`📖 书名: ${bookTitle}`);
 
   // 3. 解析章节结构
