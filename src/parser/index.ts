@@ -1,3 +1,3 @@
-export { parseSidebar, flattenChapters } from './sidebar.js';
+export { parseSidebar, flattenChapters, buildTocTree } from './sidebar.js';
 export { extractConfig, extractCssLinks } from './config.js';
 export { scanForChapters } from './scanner.js';

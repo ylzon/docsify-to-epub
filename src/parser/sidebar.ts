@@ -1,4 +1,11 @@
-import type { Chapter } from '../types.js';
+import type { Chapter, TocEntry } from '../types.js';
+
+/**
+ * 去除字符串中的 HTML 标签，仅保留文本内容
+ */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').trim();
+}
 
 /**
  * 解析 _sidebar.md 文件内容，生成章节树结构
@@ -24,7 +31,7 @@ export function parseSidebar(content: string, basePath: string = ''): Chapter[] 
     const textMatch = trimmed.match(/^[\s]*[*\-+]\s+(.+)/);
 
     if (linkMatch) {
-      const title = linkMatch[1];
+      const title = stripHtml(linkMatch[1]);
       let path = decodeURIComponent(linkMatch[2]);
 
       // 处理路径：/ → README.md
@@ -60,7 +67,7 @@ export function parseSidebar(content: string, basePath: string = ''): Chapter[] 
       stack.push({ level, children: chapter.children });
     } else if (textMatch && !linkMatch) {
       // 纯文本分组标题（无链接）
-      const title = textMatch[1].trim();
+      const title = stripHtml(textMatch[1].trim());
       const chapter: Chapter = {
         id: `chapter-${String(++chapterIndex).padStart(3, '0')}`,
         title,
@@ -98,4 +105,37 @@ export function flattenChapters(chapters: Chapter[]): Chapter[] {
 
   walk(chapters);
   return result;
+}
+
+/**
+ * 从章节树构建层级目录结构
+ * @param chapters 解析 sidebar 得到的层级章节树
+ * @param filenameMap 章节 ID → 文件名 的映射（如 "chapter-001" → "chapter-001.xhtml"）
+ */
+export function buildTocTree(
+  chapters: Chapter[],
+  filenameMap: Map<string, string>
+): TocEntry[] {
+  function findFirstFilename(entries: TocEntry[]): string {
+    for (const entry of entries) {
+      if (entry.filename) return entry.filename;
+      const found = findFirstFilename(entry.children);
+      if (found) return found;
+    }
+    return '';
+  }
+
+  function convert(ch: Chapter): TocEntry {
+    const children = ch.children.map(convert);
+
+    // 有路径的章节用自身文件名，无路径的分组标题用第一个后代的文件名
+    let filename = filenameMap.get(ch.id) || '';
+    if (!filename) {
+      filename = findFirstFilename(children);
+    }
+
+    return { title: ch.title, filename, children };
+  }
+
+  return chapters.map(convert);
 }

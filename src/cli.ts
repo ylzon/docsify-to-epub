@@ -4,8 +4,8 @@ import { Command } from 'commander';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import type { CliOptions, BookMetadata, Chapter, ChapterContent } from './types.js';
-import { parseSidebar, flattenChapters, extractConfig, scanForChapters } from './parser/index.js';
-import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, extractHeadings, addHeadingIds } from './converter/index.js';
+import { parseSidebar, flattenChapters, buildTocTree, extractConfig, scanForChapters } from './parser/index.js';
+import { convertMarkdown, wrapXhtml, getHighlightCss, extractAndMergeStyles, collectImageRefs, loadImages, resolveImageRefs, addHeadingIds } from './converter/index.js';
 import { generateOpf, generateNcx, generateNav, createEpub } from './generator/index.js';
 import { readFile, exists, setVerbose, info, success, error, warn, debug } from './utils/index.js';
 
@@ -108,10 +108,6 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
     chapterMap.set(ch.path, `../chapters/${filename}`);
   }
 
-  // 判断是否只包含一级标题
-  const maxLevel = Math.max(0, ...chaptersWithContent.map(ch => ch.level));
-  const shouldExtractSubHeadings = maxLevel === 0;
-
   // 8. 转换 Markdown → XHTML
   info('🔄 转换 Markdown 为 XHTML...');
   for (const ch of chaptersWithContent) {
@@ -135,16 +131,8 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
       }
     }
 
-    let subHeadings;
-    if (shouldExtractSubHeadings && ch.content) {
-      subHeadings = extractHeadings(ch.content);
-    }
-
     let bodyHtml = convertMarkdown(ch.content || '', chapterMap, chapterImageMap);
-    
-    if (shouldExtractSubHeadings) {
-      bodyHtml = addHeadingIds(bodyHtml);
-    }
+    bodyHtml = addHeadingIds(bodyHtml);
 
     const xhtml = wrapXhtml(ch.title, bodyHtml);
 
@@ -154,7 +142,6 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
       filename: `${ch.id}.xhtml`,
       xhtml,
       level: ch.level,
-      subHeadings,
     });
     debug(`转换: ${ch.title}`);
   }
@@ -187,9 +174,17 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
 
   // 11. 生成 OPF、NCX、NAV
   info('📝 生成 EPUB 元数据...');
+
+  // 构建层级目录树
+  const filenameMap = new Map<string, string>();
+  for (const cc of chapterContents) {
+    filenameMap.set(cc.id, cc.filename);
+  }
+  const tocTree = buildTocTree(chapters, filenameMap);
+
   const opf = generateOpf(metadata, chapterContents, images);
-  const ncx = generateNcx(metadata.identifier, metadata.title, chapterContents);
-  const nav = generateNav(metadata.title, chapterContents);
+  const ncx = generateNcx(metadata.identifier, metadata.title, tocTree);
+  const nav = generateNav(metadata.title, tocTree);
 
   // 12. 打包 EPUB
   const defaultOutput = `./${bookTitle}.epub`;

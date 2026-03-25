@@ -38,6 +38,16 @@ export interface SubHeading {
   level: number; // 2 = h2, 3 = h3
 }
 
+/** 层级目录条目（从 sidebar 层级结构生成） */
+export interface TocEntry {
+  /** 显示标题（已去除 HTML 标签） */
+  title: string;
+  /** 目标文件名，如 "chapter-001.xhtml"；无链接条目解析为第一个后代的文件名 */
+  filename: string;
+  /** 子条目 */
+  children: TocEntry[];
+}
+
 /** 图片资源 */
 export interface ImageAsset {
   id: string;
