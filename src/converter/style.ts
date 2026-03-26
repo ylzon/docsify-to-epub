@@ -30,7 +30,7 @@ function downloadCss(url: string): Promise<string> {
       res.on('error', reject);
     });
     request.on('error', reject);
-    request.setTimeout(10000, () => {
+    request.setTimeout(20000, () => {
       request.destroy();
       reject(new Error('请求超时'));
     });
@@ -56,12 +56,12 @@ export async function extractAndMergeStyles(docsDir: string, downloadTheme: bool
           try {
             info(`📥 Downloading remote CSS: ${link}`);
             let css: string | null = null;
-            for (let attempt = 1; attempt <= 3; attempt++) {
+            for (let attempt = 1; attempt <= 5; attempt++) {
               try {
                 css = await downloadCss(link);
                 break;
               } catch (err) {
-                warn(`Failed to download remote CSS: ${link} - ${err} [${attempt}/3]`);
+                warn(`Failed to download remote CSS: ${link} - ${err} [${attempt}/5]`);
               }
             }
             if (css) {
