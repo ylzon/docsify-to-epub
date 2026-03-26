@@ -43,6 +43,7 @@ program.parse();
  * 主转换流程
  */
 async function convert(dir: string, options: CliOptions): Promise<void> {
+  const startTime = Date.now();
   const docsDir = path.resolve(dir);
 
   // 1. 验证目录
@@ -245,6 +246,12 @@ async function convert(dir: string, options: CliOptions): Promise<void> {
     highlightCss,
   });
 
+  const endTime = Date.now();
+  const totalSeconds = Math.floor((endTime - startTime) / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  const timeStr = m > 0 ? `${m} m ${s} s` : `${s} s`;
+
   success(`✅ EPUB generated successfully: ${outputPath}`);
-  info(`   Chapters: ${chapterContents.length} | Images: ${images.length}`);
+  info(`   Chapters: ${chapterContents.length} | Images: ${images.length} | Total Time: ${timeStr}`);
 }
