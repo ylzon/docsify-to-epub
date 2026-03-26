@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import * as cheerio from 'cheerio';
+import * as crypto from 'node:crypto';
 import { highlightCode } from './highlight.js';
 import type { SubHeading } from '../types.js';
 
@@ -149,41 +150,36 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function generateHeadingId(title: string): string {
+  const cleanTitle = title
+    .replace(/<!--.*?-->/g, '')  // 移除 HTML 注释
+    .replace(/\{.*?\}/g, '')      // 移除 docsify 标注
+    .trim();
+  const hash = crypto.createHash('md5').update(cleanTitle).digest('hex').slice(0, 8);
+  return `id-${hash}`;
+}
+
 /**
  * 从 Markdown 源文本中提取 h2/h3 子标题
  */
 export function extractHeadings(markdownContent: string): SubHeading[] {
   const headings: SubHeading[] = [];
-  
-  // 先过滤掉 Markdown 代码块和 HTML pre 标签，避免提取代码内部的 ##
-  const safeContent = markdownContent
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/~~~[\s\S]*?~~~/g, '')
-    .replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, '');
 
-  // 仅匹配 ## 标题 (h2)
-  const headingRegex = /^(#{2})\s+(.+)$/gm;
-  let match;
+  // 通过预处理与渲染确保提取的标题和页面渲染完全一致（避免 Markdown 语法对哈希产生干扰）
+  const preprocessed = preprocessDocsify(markdownContent);
+  const html = mdRenderer.render(preprocessed);
+  // @ts-ignore
+  const $ = cheerio.load(html, { xmlMode: true, decodeEntities: false }, false);
 
-  while ((match = headingRegex.exec(safeContent)) !== null) {
-    const level = match[1].length; // 2
-    const title = match[2].trim()
-      .replace(/<!--.*?-->/g, '')  // 移除 HTML 注释
-      .replace(/\{.*?\}/g, '')      // 移除 docsify 标注
-      .trim();
+  $('h2').each((_, el) => {
+    const title = $(el).text().trim();
+    if (!title) return;
 
-    if (!title) continue;
+    // 生成随机但确定的锚点 ID，提取纯文本进行哈希能够保证目录和页面 ID 严格对应
+    const anchor = generateHeadingId(title);
 
-    // 生成锚点 ID（与 markdown-it 默认行为一致）
-    const anchor = title
-      .toLowerCase()
-      .replace(/[^\w\u4e00-\u9fff\s-]/g, '')  // 保留中英文、数字、空格、连字符
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-
-    headings.push({ title, anchor, level });
-  }
+    headings.push({ title, anchor, level: 2 });
+  });
 
   return headings;
 }
@@ -192,23 +188,17 @@ export function extractHeadings(markdownContent: string): SubHeading[] {
  * 在 XHTML 中为 h2 标签注入 id 属性（用于锚点跳转）
  */
 export function addHeadingIds(xhtml: string): string {
-  return xhtml.replace(
-    /<(h2)(\s[^>]*)?>([^<]+)<\/h2>/gi,
-    (match, tag, attrs, text) => {
-      const title = text.trim();
-      const anchor = title
-        .toLowerCase()
-        .replace(/[^\w\u4e00-\u9fff\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-
-      // 检查是否已有 id 属性
-      if (attrs && /id\s*=/.test(attrs)) {
-        return match;
-      }
-
-      return `<${tag} id="${anchor}"${attrs || ''}>${text}</${tag}>`;
+  // @ts-ignore
+  const $ = cheerio.load(xhtml, { xmlMode: true, decodeEntities: false }, false);
+  
+  $('h2').each((_, el) => {
+    const $el = $(el);
+    if (!$el.attr('id')) {
+      const title = $el.text().trim();
+      const anchor = generateHeadingId(title);
+      $el.attr('id', anchor);
     }
-  );
+  });
+
+  return $.xml();
 }
