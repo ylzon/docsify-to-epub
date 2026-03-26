@@ -10,7 +10,7 @@ export async function extractConfig(docsDir: string): Promise<DocsifyConfig> {
   const indexPath = path.join(docsDir, 'index.html');
 
   if (!exists(indexPath)) {
-    debug('index.html 不存在，使用默认配置');
+    debug('index.html not found, using default configuration');
     return {};
   }
 
@@ -20,7 +20,7 @@ export async function extractConfig(docsDir: string): Promise<DocsifyConfig> {
   // 提取 window.$docsify 配置块
   const configMatch = html.match(/window\.\$docsify\s*=\s*\{([\s\S]*?)\}/);
   if (!configMatch) {
-    debug('未找到 window.$docsify 配置');
+    debug('window.$docsify configuration not found');
     return config;
   }
 
@@ -60,7 +60,7 @@ export async function extractConfig(docsDir: string): Promise<DocsifyConfig> {
   const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
   if (titleMatch) config.htmlTitle = titleMatch[1].trim();
 
-  debug(`提取到 Docsify 配置: ${JSON.stringify(config)}`);
+  debug(`Extracted Docsify configuration: ${JSON.stringify(config)}`);
   return config;
 }
 

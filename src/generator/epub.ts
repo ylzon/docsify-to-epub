@@ -32,12 +32,12 @@ export async function createEpub(outputPath: string, content: EpubContent): Prom
 
     output.on('close', () => {
       const sizeKB = (archive.pointer() / 1024).toFixed(1);
-      debug(`EPUB 文件大小: ${sizeKB} KB`);
+      debug(`EPUB file size: ${sizeKB} KB`);
       resolve();
     });
 
     archive.on('error', (err) => {
-      reject(new Error(`EPUB 打包失败: ${err.message}`));
+      reject(new Error(`Failed to pack EPUB: ${err.message}`));
     });
 
     archive.pipe(output);
@@ -83,7 +83,7 @@ export async function createEpub(outputPath: string, content: EpubContent): Prom
       archive.append(chapter.xhtml, {
         name: `OEBPS/chapters/${chapter.filename}`,
       });
-      debug(`打包章节: ${chapter.filename}`);
+      debug(`Packing chapter: ${chapter.filename}`);
     }
 
     // 9. 图片资源
@@ -91,7 +91,7 @@ export async function createEpub(outputPath: string, content: EpubContent): Prom
       archive.append(image.data, {
         name: `OEBPS/${image.epubPath}`,
       });
-      debug(`打包图片: ${image.filename}`);
+      debug(`Packing image: ${image.filename}`);
     }
 
     archive.finalize();

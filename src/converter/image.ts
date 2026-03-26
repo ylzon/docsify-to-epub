@@ -115,7 +115,7 @@ async function downloadImage(url: string, maxRetries: number = 3): Promise<{ dat
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        warn(`下载远程图片失败 (${response.status}): ${url} [第 ${attempt}/${maxRetries} 次]`);
+        warn(`Failed to download remote image (${response.status}): ${url} [第 ${attempt}/${maxRetries} 次]`);
         if (attempt < maxRetries) continue;
         return null;
       }
@@ -125,7 +125,7 @@ async function downloadImage(url: string, maxRetries: number = 3): Promise<{ dat
       const ext = extFromUrl(url) || extFromContentType(contentType);
       return { data, ext };
     } catch (err) {
-      warn(`下载远程图片失败: ${url} - ${err} [第 ${attempt}/${maxRetries} 次]`);
+      warn(`Failed to download remote image: ${url} - ${err} [第 ${attempt}/${maxRetries} 次]`);
       if (attempt < maxRetries) continue;
       return null;
     }
@@ -191,7 +191,7 @@ export async function loadImages(
       // 下载远程图片
       const result = await downloadImage(ref.src);
       if (!result) {
-        error(`远程图片下载最终失败: ${ref.src} (来源: ${ref.chapterPath})`);
+        error(`Remote image download completely failed: ${ref.src} (Source: ${ref.chapterPath})`);
         continue;
       }
 
@@ -213,7 +213,7 @@ export async function loadImages(
 
       images.push(asset);
       imageMap.set(ref.src, `../images/${filename}`);
-      debug(`下载远程图片: ${ref.src} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
+      debug(`Downloading remote image: ${ref.src} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
       continue;
     }
 
@@ -221,7 +221,7 @@ export async function loadImages(
     const absolutePath = path.resolve(docsDir, ref.chapterDir, ref.src);
 
     if (!exists(absolutePath)) {
-      warn(`图片文件不存在: ${ref.src} (解析路径: ${absolutePath})`);
+      warn(`Image file not found: ${ref.src} (Resolved path: ${absolutePath})`);
       continue;
     }
 
@@ -249,9 +249,9 @@ export async function loadImages(
       images.push(asset);
       // key 用规范化路径，这样不同章节引用同一图片只嵌入一次
       imageMap.set(normalizedKey, `../images/${filename}`);
-      debug(`加载图片: ${normalizedKey} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
+      debug(`Loading image: ${normalizedKey} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
     } catch (err) {
-      warn(`加载图片失败: ${ref.src} - ${err}`);
+      warn(`Failed to load image: ${ref.src} - ${err}`);
     }
   }
 

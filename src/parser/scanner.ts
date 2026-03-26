@@ -38,6 +38,6 @@ export async function scanForChapters(docsDir: string): Promise<Chapter[]> {
     });
   }
 
-  debug(`扫描到 ${chapters.length} 个 Markdown 文件`);
+  debug(`Scanned ${chapters.length} Markdown files`);
   return chapters;
 }

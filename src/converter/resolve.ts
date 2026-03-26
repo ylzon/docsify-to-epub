@@ -57,9 +57,9 @@ export function resolveImageRefs(chapter: Chapter, docsDir: string): string {
       const absChapterDir = path.resolve(docsDir, chapterDir);
       const relPath = path.relative(absChapterDir, found);
       appendLines.push(`[${refId}]: ${relPath}`);
-      debug(`自动解析图片引用: [${refId}] → ${relPath}`);
+      debug(`Auto-resolving image reference: [${refId}] → ${relPath}`);
     } else {
-      warn(`无法找到引用式图片: ![][${refId}]`);
+      warn(`Cannot find reference-style image: ![][${refId}]`);
     }
   }
 
