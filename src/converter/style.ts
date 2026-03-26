@@ -61,7 +61,7 @@ export async function extractAndMergeStyles(docsDir: string, downloadTheme: bool
                 css = await downloadCss(link);
                 break;
               } catch (err) {
-                warn(`Failed to download remote CSS: ${link} - ${err} [第 ${attempt}/3 次]`);
+                warn(`Failed to download remote CSS: ${link} - ${err} [${attempt}/3]`);
               }
             }
             if (css) {
@@ -152,14 +152,14 @@ function getDefaultEpubStyles(): string {
   const cssPath = path.join(__dirname, '..', 'src', 'styles', 'default.css');
   // 优先从源码目录读取，回退到打包目录
   const altPath = path.join(__dirname, 'styles', 'default.css');
-  
+
   if (fs.existsSync(cssPath)) {
     return fs.readFileSync(cssPath, 'utf-8');
   }
   if (fs.existsSync(altPath)) {
     return fs.readFileSync(altPath, 'utf-8');
   }
-  
+
   // 最终回退：返回最小默认样式
   return `body { font-family: Georgia, serif; line-height: 1.6; margin: 1em; }
 img { max-width: 100%; height: auto; }`;

@@ -1,6 +1,6 @@
 {
   "name": "docsify-to-epub",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "将 Docsify 文档站点转换为 EPUB 电子书",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

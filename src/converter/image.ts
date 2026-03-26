@@ -115,7 +115,7 @@ async function downloadImage(url: string, maxRetries: number = 3): Promise<{ dat
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        warn(`Failed to download remote image (${response.status}): ${url} [第 ${attempt}/${maxRetries} 次]`);
+        warn(`Failed to download remote image (${response.status}): ${url} [${attempt}/${maxRetries}]`);
         if (attempt < maxRetries) continue;
         return null;
       }
@@ -125,7 +125,7 @@ async function downloadImage(url: string, maxRetries: number = 3): Promise<{ dat
       const ext = extFromUrl(url) || extFromContentType(contentType);
       return { data, ext };
     } catch (err) {
-      warn(`Failed to download remote image: ${url} - ${err} [第 ${attempt}/${maxRetries} 次]`);
+      warn(`Failed to download remote image: ${url} - ${err} [${attempt}/${maxRetries}]`);
       if (attempt < maxRetries) continue;
       return null;
     }
@@ -182,78 +182,100 @@ export async function loadImages(
   const images: ImageAsset[] = [];
   const imageMap = new Map<string, string>();
   let index = 0;
+  let completedCount = 0;
   const total = imageRefs.length;
+
+  const concurrencyLimit = 5;
+  const executing = new Set<Promise<void>>();
 
   for (let i = 0; i < imageRefs.length; i++) {
     const ref = imageRefs[i];
-    onProgress?.(i + 1, total);
-    if (ref.remote) {
-      // 下载远程图片
-      const result = await downloadImage(ref.src);
-      if (!result) {
-        error(`Remote image download completely failed: ${ref.src} (Source: ${ref.chapterPath})`);
-        continue;
+
+    const task = (async () => {
+      try {
+        if (ref.remote) {
+          // 下载远程图片
+          const result = await downloadImage(ref.src);
+          if (!result) {
+            error(`Remote image download completely failed: ${ref.src} (Source: ${ref.chapterPath})`);
+            return;
+          }
+
+          const { data: rawData, ext: rawExt } = result;
+          const rawMediaType = getMediaType(`dummy${rawExt || '.png'}`);
+
+          const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
+
+          const currentIndex = ++index;
+          const filename = `image-${String(currentIndex).padStart(3, '0')}${ext}`;
+
+          const asset: ImageAsset = {
+            id: `img-${String(currentIndex).padStart(3, '0')}`,
+            originalPath: ref.src,
+            epubPath: `images/${filename}`,
+            filename,
+            mediaType,
+            data,
+          };
+
+          images.push(asset);
+          imageMap.set(ref.src, `../images/${filename}`);
+          debug(`Downloading image: ${ref.src} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
+          return;
+        }
+
+        // 本地图片
+        const absolutePath = path.resolve(docsDir, ref.chapterDir, ref.src);
+
+        if (!exists(absolutePath)) {
+          warn(`Image file not found: ${ref.src} (Resolved path: ${absolutePath})`);
+          return;
+        }
+
+        const rawData = await readFileBuffer(absolutePath);
+        const rawExt = path.extname(ref.src).toLowerCase();
+        const rawMediaType = getMediaType(ref.src);
+
+        const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
+
+        const currentIndex = ++index;
+        const filename = `image-${String(currentIndex).padStart(3, '0')}${ext}`;
+
+        // 规范化后的相对路径（相对于 docsDir）
+        const normalizedKey = path.normalize(path.join(ref.chapterDir, ref.src));
+
+        const asset: ImageAsset = {
+          id: `img-${String(currentIndex).padStart(3, '0')}`,
+          originalPath: normalizedKey,
+          epubPath: `images/${filename}`,
+          filename,
+          mediaType,
+          data,
+        };
+
+        images.push(asset);
+        // key 用规范化路径，这样不同章节引用同一图片只嵌入一次
+        imageMap.set(normalizedKey, `../images/${filename}`);
+        debug(`Loading image: ${normalizedKey} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
+      } catch (err) {
+        warn(`Failed to process image: ${ref.src} - ${err}`);
+      } finally {
+        completedCount++;
+        onProgress?.(completedCount, total);
       }
+    })();
 
-      const { data: rawData, ext: rawExt } = result;
-      const rawMediaType = getMediaType(`dummy${rawExt || '.png'}`);
+    const p = task.then(() => {
+      executing.delete(p);
+    });
+    executing.add(p);
 
-      const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
-
-      const filename = `image-${String(++index).padStart(3, '0')}${ext}`;
-
-      const asset: ImageAsset = {
-        id: `img-${String(index).padStart(3, '0')}`,
-        originalPath: ref.src,
-        epubPath: `images/${filename}`,
-        filename,
-        mediaType,
-        data,
-      };
-
-      images.push(asset);
-      imageMap.set(ref.src, `../images/${filename}`);
-      debug(`Downloading remote image: ${ref.src} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
-      continue;
-    }
-
-    // 本地图片
-    const absolutePath = path.resolve(docsDir, ref.chapterDir, ref.src);
-
-    if (!exists(absolutePath)) {
-      warn(`Image file not found: ${ref.src} (Resolved path: ${absolutePath})`);
-      continue;
-    }
-
-    try {
-      const rawData = await readFileBuffer(absolutePath);
-      const rawExt = path.extname(ref.src).toLowerCase();
-      const rawMediaType = getMediaType(ref.src);
-
-      const { data, ext, mediaType } = await optimizeImage(rawData, rawExt, rawMediaType);
-
-      const filename = `image-${String(++index).padStart(3, '0')}${ext}`;
-
-      // 规范化后的相对路径（相对于 docsDir）
-      const normalizedKey = path.normalize(path.join(ref.chapterDir, ref.src));
-
-      const asset: ImageAsset = {
-        id: `img-${String(index).padStart(3, '0')}`,
-        originalPath: normalizedKey,
-        epubPath: `images/${filename}`,
-        filename,
-        mediaType,
-        data,
-      };
-
-      images.push(asset);
-      // key 用规范化路径，这样不同章节引用同一图片只嵌入一次
-      imageMap.set(normalizedKey, `../images/${filename}`);
-      debug(`Loading image: ${normalizedKey} → ${filename} (${(data.length / 1024).toFixed(1)} KB)`);
-    } catch (err) {
-      warn(`Failed to load image: ${ref.src} - ${err}`);
+    if (executing.size >= concurrencyLimit) {
+      await Promise.race(executing);
     }
   }
+
+  await Promise.all(executing);
 
   return { images, imageMap };
 }
